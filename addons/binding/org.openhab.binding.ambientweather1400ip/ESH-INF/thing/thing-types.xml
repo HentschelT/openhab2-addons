@@ -63,14 +63,14 @@
         <label>Indoor Humidity</label>
         <description>Current Humidity Indoor</description>
         <category>Thermostat</category>
-        <state pattern="%.1f %" readOnly="true"/>
+        <state pattern="%.1f %%" readOnly="true"/>
     </channel-type>
     <channel-type id="humidity_chan_outdoor">
         <item-type>Number</item-type>
         <label>Outdoor Humidity</label>
         <description>Current Humidity Outdoor</description>
         <category>Thermostat</category>
-        <state pattern="%.1f %" readOnly="true"/>
+        <state pattern="%.1f %%" readOnly="true"/>
     </channel-type>
     <channel-type id="pressure_chan_abs">
         <item-type>Number</item-type>
