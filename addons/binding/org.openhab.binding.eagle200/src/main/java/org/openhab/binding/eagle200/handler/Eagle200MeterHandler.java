@@ -14,7 +14,9 @@ package org.openhab.binding.eagle200.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -24,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Channel;
@@ -35,8 +38,6 @@ import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.thing.binding.builder.ChannelBuilder;
 import org.eclipse.smarthome.core.thing.binding.builder.ThingBuilder;
-import org.eclipse.smarthome.core.thing.type.ChannelKind;
-import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.eagle200.Eagle200BindingConstants;
 import org.slf4j.Logger;
@@ -140,11 +141,11 @@ public class Eagle200MeterHandler extends BaseThingHandler {
     @SuppressWarnings("null")
     private void initChannels() {
         Bridge bridge = getBridge();
-        Configuration config = Eagle200MeterHandler.this.getConfig();
+        Configuration config = this.getConfig();
         String addr = (String) config.get(Eagle200BindingConstants.THING_CONFIG_HWADDRESS);
 
         if (bridge == null || bridge.getHandler() == null) {
-            logger.debug("eagle200 has no bridge yet");
+            logger.debug("eagle200 utility meter has no bridge yet");
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
         Map<String, String> update;
@@ -158,16 +159,25 @@ public class Eagle200MeterHandler extends BaseThingHandler {
 
         ThingBuilder builder = this.editThing();
         SortedMap<String, String> sorted = new TreeMap<String, String>(update);
+        List<Channel> channels = new ArrayList<Channel>();
         for (Map.Entry<String, String> entry : sorted.entrySet()) {
-            if (this.getThing().getChannel(this.getChannelName(entry.getKey())) == null) {
-                String tag = entry.getKey().replace("zigbee:", "");
-                ChannelTypeUID typeUID = new ChannelTypeUID(Eagle200BindingConstants.BINDING_ID, tag);
+            String tag = this.getChannelName(entry.getKey());
+
+            if (this.getThing().getChannel(tag) == null) {
+                boolean numeric = this.isNumeric(entry.getValue());
                 ChannelUID uid = this.getChannelUID(entry.getKey());
-                Channel channel = ChannelBuilder.create(uid, "String").withLabel(tag).withType(typeUID)
-                        .withKind(ChannelKind.STATE).build();
-                builder.withChannel(channel);
+                if (numeric) {
+                    Channel channel = ChannelBuilder.create(uid, "Number").withLabel(tag)
+                            .withType(Eagle200BindingConstants.CHANNEL_UTILITY_METERNUMBER_TYPEUID).build();
+                    channels.add(channel);
+                } else {
+                    Channel channel = ChannelBuilder.create(uid, "String").withLabel(tag)
+                            .withType(Eagle200BindingConstants.CHANNEL_UTILITY_METER_TYPEUID).build();
+                    channels.add(channel);
+                }
             }
         }
+        builder.withChannels(channels);
         this.updateThing(builder.build());
         updateStatus(ThingStatus.ONLINE);
     }
@@ -185,12 +195,28 @@ public class Eagle200MeterHandler extends BaseThingHandler {
 
         for (Map.Entry<String, String> update : updates.entrySet()) {
             String lastvalue = this.lastupdates.get(update.getKey());
+            ChannelUID key = this.getChannelUID(update.getKey());
+            boolean numeric = this.isNumeric(update.getValue());
             if (lastvalue == null) {
-                this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+                if (numeric) {
+                    BigDecimal value = new BigDecimal(update.getValue());
+                    this.updateState(key, new DecimalType(value));
+                } else {
+                    this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+                }
             } else if (update.getValue() != null && !update.getValue().equals(this.lastupdates.get(update.getKey()))) {
-                this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+                if (numeric) {
+                    BigDecimal value = new BigDecimal(update.getValue());
+                    this.updateState(key, new DecimalType(value));
+                } else {
+                    this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+                }
             }
         }
         this.lastupdates = updates;
+    }
+
+    private boolean isNumeric(String str) {
+        return str.matches("-?\\d+(\\.\\d+)?"); // match a number with optional '-' and decimal.
     }
 }

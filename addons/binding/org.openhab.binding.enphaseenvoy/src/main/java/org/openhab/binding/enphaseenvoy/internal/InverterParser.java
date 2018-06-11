@@ -59,7 +59,7 @@ public class InverterParser {
         return result;
     }
 
-    private String getInverters(EnphaseEnvoyBridgeConfiguration config) {
+    private String getInverters(EnphaseEnvoyBridgeConfiguration config) throws IOException {
         String passwd = config.password;
 
         DigestAuthenticator authenticator = new DigestAuthenticator(new Credentials("envoy", passwd));
@@ -80,7 +80,7 @@ public class InverterParser {
             return result;
         } catch (IOException e) {
             logger.warn("getting inverter data failed", e);
+            throw e;
         }
-        return null;
     }
 }

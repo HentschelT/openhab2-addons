@@ -106,8 +106,7 @@ public class EnphaseEnvoyDiscoveryService extends AbstractDiscoveryService imple
         try {
             inverters = this.bridgeHandler.getInverterParser().getInverterData(config);
         } catch (IOException e) {
-            logger.warn("envoy scan for inverters failed due to: {}, password in configuration not set/incorrect?",
-                    e.getMessage());
+            logger.warn("envoy scan for inverters failed due to: {}", e.getMessage());
             return;
         }
         if (inverters == null) {

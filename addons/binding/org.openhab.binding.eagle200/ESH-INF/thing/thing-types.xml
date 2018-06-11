@@ -42,4 +42,16 @@
 			</parameter>
 		</config-description>
 	</thing-type>
+    <channel-type id="utility_meter_channel">
+        <item-type>String</item-type>
+        <label>Utility Meter Channel</label>
+        <description>Utility Meter Channel</description>
+        <state readOnly="true"></state>
+    </channel-type>
+    <channel-type id="utility_meter_channel_number">
+        <item-type>Number</item-type>
+        <label>Utility Meter Channel (Number)</label>
+        <description>Utility Meter Channel (Number)</description>
+        <state readOnly="true"></state>
+    </channel-type>
 </thing:thing-descriptions>
