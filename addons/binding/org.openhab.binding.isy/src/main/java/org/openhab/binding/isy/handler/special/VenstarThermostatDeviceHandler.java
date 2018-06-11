@@ -13,6 +13,7 @@ import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
+import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.PrimitiveType;
 import org.eclipse.smarthome.core.types.RefreshType;
@@ -280,20 +281,41 @@ public class VenstarThermostatDeviceHandler extends IsyDeviceHandler {
         }
     }
 
+    @SuppressWarnings({ "null", "unused" })
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         // TODO figure how to send special "set" commands which aren't yet handled by the IsyRestClient
 
         logger.debug("venstar handle command, channel: {}, command: {}", channelUID, command);
+        // handle venstar specific commands here
+        IsyBridgeHandler bridgeHandler = getBridgeHandler();
+        IsyInsteonDeviceConfiguration config = getThing().getConfiguration().as(IsyInsteonDeviceConfiguration.class);
+        String isyAddress = NodeAddress.parseAddressString(config.address, 1).toString();
+        logger.debug("insteon address for command is: {}", isyAddress);
+        OHIsyClient insteonClient = bridgeHandler.getInsteonClient();
+        if (insteonClient == null) {
+            logger.debug("venstar handle command no insteon client");
+            return; // no point moving on if we don't know what to get/set
+        }
+        // handle refresh, since that may not have a channel associated. This will update all channels
+        // get out after this, since this may be called with channelUID == null for all channel update
+        if (command instanceof RefreshType) {
+            logger.debug("venstar handle command: RefreshType");
+            this.refresh(insteonClient, isyAddress);
+            return;
+        }
+
+        // channelUID can be null, but only if a refresh is requested. Should never be null here
+        if (channelUID == null) {
+            logger.debug("venstar handle command: no channelUID");
+            return;
+        }
 
         // default to super handler if not venstar specific command
         if (!this.isVenstarChannel(channelUID.getId())) {
             super.handleCommand(channelUID, command);
             return;
         }
-        // handle venstar specific commands here
-        IsyBridgeHandler bridgeHandler = getBridgeHandler();
-        IsyInsteonDeviceConfiguration config = getThing().getConfiguration().as(IsyInsteonDeviceConfiguration.class);
 
         String vsPropertyName = this.getVenstarPropertyFromCommand(channelUID.getId());
         if (vsPropertyName == null) {
@@ -302,19 +324,9 @@ public class VenstarThermostatDeviceHandler extends IsyDeviceHandler {
             return; // no point moving on if we don't know what to get/set
         }
 
-        String isyAddress = NodeAddress.parseAddressString(config.address, 1).toString();
-        logger.debug("insteon address for command is: {}", isyAddress);
-        OHIsyClient insteonClient = bridgeHandler.getInsteonClient();
-        if (insteonClient == null) {
-            logger.debug("venstar handle command no insteon client");
-            return; // no point moving on if we don't know what to get/set
-        }
-
+        // handle actual commands
         // venstar commands always go to channel 1, and we get all properties in one swoop
-        if (command instanceof RefreshType) {
-            logger.debug("venstar handle command: RefreshType");
-            this.refresh(insteonClient, isyAddress);
-        } else if (command instanceof DecimalType) {
+        if (command instanceof DecimalType) {
             Integer commandValue = null;
             switch (vsPropertyName) {
                 case "CLISPC":
@@ -358,7 +370,6 @@ public class VenstarThermostatDeviceHandler extends IsyDeviceHandler {
         } else {
             logger.warn("unhandled Command: {}", command.toFullString());
         }
-
     }
 
     /**
@@ -448,6 +459,9 @@ public class VenstarThermostatDeviceHandler extends IsyDeviceHandler {
             // other device id's are handled normal, they only got "ST" ON/OFF values
             super.handleUpdate(control, action, node);
         }
-    }
 
+        if (!this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
+            this.updateStatus(ThingStatus.ONLINE);
+        }
+    }
 }

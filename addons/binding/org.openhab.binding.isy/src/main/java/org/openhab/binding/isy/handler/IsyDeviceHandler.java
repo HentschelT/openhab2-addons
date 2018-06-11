@@ -170,10 +170,11 @@ public class IsyDeviceHandler extends AbtractIsyThingHandler {
         super.bridgeStatusChanged(bridgeStatusInfo);
     }
 
+    @SuppressWarnings("null")
     @Override
     public void initialize() {
         // device update is changed on first update or refresh, when comm is confirmed
-        // updateStatus(ThingStatus.ONLINE);
+        this.handleCommand(null, RefreshType.REFRESH);
     }
 
     protected void addChannelToDevice(String channel, int deviceId) {
