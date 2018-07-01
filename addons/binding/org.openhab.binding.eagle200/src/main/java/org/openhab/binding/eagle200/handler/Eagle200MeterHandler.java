@@ -12,7 +12,6 @@
  */
 package org.openhab.binding.eagle200.handler;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,10 +76,9 @@ public class Eagle200MeterHandler extends BaseThingHandler {
                         }
                         Eagle200MeterHandler.this.updateChannels(update);
                     }
-                } catch (IOException e) {
-                    logger.warn("connection to eagle caused IO error", e);
+                } catch (Exception e) {
+                    logger.warn("connection to Eagle200 caused error", e);
                     Eagle200MeterHandler.this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
-                    return;
                 }
             }
         };
