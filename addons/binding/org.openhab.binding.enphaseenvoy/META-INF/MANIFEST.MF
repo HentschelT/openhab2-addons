@@ -10,7 +10,7 @@ Bundle-Name: EnphaseEnvoy Binding
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-SymbolicName: org.openhab.binding.enphaseenvoy;singleton:=true
 Bundle-Vendor: openHAB
-Bundle-Version: 2.3.0.qualifier
+Bundle-Version: 2.5.0.qualifier
 Import-Package: 
  com.google.gson,
  com.google.gson.annotations,
@@ -27,6 +27,6 @@ Import-Package:
  org.eclipse.smarthome.core.thing.type,
  org.eclipse.smarthome.core.types,
  org.eclipse.smarthome.core.util,
+ org.osgi.framework,
  org.slf4j
 Service-Component: OSGI-INF/*.xml
-Require-Bundle: org.eclipse.osgi
