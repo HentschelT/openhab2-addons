@@ -72,9 +72,10 @@ public class InverterParser {
     }
 
     private String getInverters(EnphaseEnvoyBridgeConfiguration config) throws IOException {
+        String username = config.username;
         String passwd = config.password;
 
-        DigestAuthenticator authenticator = new DigestAuthenticator(new Credentials("envoy", passwd));
+        DigestAuthenticator authenticator = new DigestAuthenticator(new Credentials(username, passwd));
         OkHttpClient client = new OkHttpClient.Builder()
                 .authenticator(new CachingAuthenticatorDecorator(authenticator, authCache))
                 .addInterceptor(new AuthenticationCacheInterceptor(authCache)).build();

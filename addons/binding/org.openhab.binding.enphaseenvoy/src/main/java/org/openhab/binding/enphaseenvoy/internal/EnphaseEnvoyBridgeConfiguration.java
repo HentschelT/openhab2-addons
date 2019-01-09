@@ -20,11 +20,12 @@ public class EnphaseEnvoyBridgeConfiguration {
      */
     public String hostname;
     public String serialnumber;
+    public String username;
     public String password;
     public int scanperiod;
 
     public boolean isComplete() {
-        return hostname != null && hostname.length() > 0 && password != null && password.length() > 0
-                && serialnumber != null && serialnumber.length() > 6;
+        return hostname != null && hostname.length() > 0 && username != null && username.length() > 0
+                && password != null && password.length() > 0 && serialnumber != null && serialnumber.length() > 6;
     }
 }

@@ -40,6 +40,7 @@ public class EnphaseEnvoyBindingConstants {
 
     public static final String CONFIG_HOSTNAME_ID = "hostname";
     public static final String CONFIG_SERIAL_ID = "serialnumber";
+    public static final String CONFIG_USERNAME_ID = "username";
     public static final String CONFIG_PASSWORD_ID = "password";
     public static final String CONFIG_SCANPERIOD_ID = "scanperiod";
     public static final String VERSION = "version";
