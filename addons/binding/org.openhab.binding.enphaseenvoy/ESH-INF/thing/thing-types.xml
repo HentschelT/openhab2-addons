@@ -24,6 +24,10 @@
 				<label>Serial Number</label>
 				<description>Enphase Envoy Serial Number</description>
 			</parameter>
+            <parameter name="username" type="text" required="true">
+                <label>Username</label>
+                <description>Enphase Envoy Username</description>
+            </parameter>			
 			<parameter name="password" type="text" required="true">
 				<label>Password</label>
 				<description>Enphase Envoy Password</description>
