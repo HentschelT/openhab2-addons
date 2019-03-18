@@ -9,10 +9,14 @@
 		<description>Enphase Envoy Bridge </description>
 
 		<channels>
-			<channel id="watt_now" typeId="production_channel_watt_now" />
-			<channel id="watthours_today" typeId="production_channel_watthours_today" />
-			<channel id="watthours_sevendays" typeId="production_channel_watthours_7days" />
-			<channel id="watthours_lifetime" typeId="production_channel_watthours_lifetime" />
+			<channel id="produced_watt_now" typeId="production_channel_watt_now" />
+			<channel id="produced_watthours_today" typeId="production_channel_watthours_today" />
+			<channel id="produced_watthours_sevendays" typeId="production_channel_watthours_7days" />
+			<channel id="produced_watthours_lifetime" typeId="production_channel_watthours_lifetime" />
+			<channel id="consumed_watt_now" typeId="consumption_channel_watt_now" />
+			<channel id="consumed_watthours_today" typeId="consumption_channel_watthours_today" />
+			<channel id="consumed_watthours_sevendays" typeId="consumption_channel_watthours_7days" />
+			<channel id="consumed_watthours_lifetime" typeId="consumption_channel_watthours_lifetime" />
 		</channels>
 
 		<config-description>
@@ -85,6 +89,34 @@
 		<state readOnly="true" />
 	</channel-type>
 
+	<channel-type id="consumption_channel_watt_now">
+		<item-type>Number</item-type>
+		<label>Consumption now (Watt)</label>
+		<description>Current Energy Consumption (Watt)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="consumption_channel_watthours_today">
+		<item-type>Number</item-type>
+		<label>Consumption today (Watt Hours)</label>
+		<description>Energy Consumption today (Watt Hours)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="consumption_channel_watthours_7days">
+		<item-type>Number</item-type>
+		<label>Consumption last 7 days (Watt Hours)</label>
+		<description>Energy Consumption last 7 days (Watt Hours)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="consumption_channel_watthours_lifetime">
+		<item-type>Number</item-type>
+		<label>Consumption total (Watt Hours)</label>
+		<description>Energy Consumption lifetime total (Watt Hours)</description>
+		<state readOnly="true" />
+	</channel-type>
+	
 	<channel-type id="production_channel_time">
 		<item-type>String</item-type>
 		<label>Last update</label>
