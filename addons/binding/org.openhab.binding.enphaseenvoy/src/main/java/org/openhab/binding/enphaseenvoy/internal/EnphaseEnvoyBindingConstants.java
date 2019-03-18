@@ -20,6 +20,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  * used across the whole binding.
  *
  * @author thomas hentschel - Initial contribution
+ * @author sameer morar - Added support for consumption data
  */
 @NonNullByDefault
 public class EnphaseEnvoyBindingConstants {
@@ -31,10 +32,15 @@ public class EnphaseEnvoyBindingConstants {
     public static final ThingTypeUID THING_TYPE_ENVOY_INVERTER = new ThingTypeUID(BINDING_ID, "envoy_inverter");
 
     // List of all Channel ids
-    public static final String BRIDGE_CHANNEL_PRODUCTION_NOW = "watt_now";
-    public static final String BRIDGE_CHANNEL_PRODUCTION_TODAY = "watthours_today";
-    public static final String BRIDGE_CHANNEL_PRODUCTION_7DAYS = "watthours_sevendays";
-    public static final String BRIDGE_CHANNEL_PRODUCTION_LIFE = "watthours_lifetime";
+    public static final String BRIDGE_CHANNEL_PRODUCTION_NOW = "produced_watt_now";
+    public static final String BRIDGE_CHANNEL_PRODUCTION_TODAY = "produced_watthours_today";
+    public static final String BRIDGE_CHANNEL_PRODUCTION_7DAYS = "produced_watthours_sevendays";
+    public static final String BRIDGE_CHANNEL_PRODUCTION_LIFE = "produced_watthours_lifetime";
+
+    public static final String BRIDGE_CHANNEL_CONSUMPTION_NOW = "consumed_watt_now";
+    public static final String BRIDGE_CHANNEL_CONSUMPTION_TODAY = "consumed_watthours_today";
+    public static final String BRIDGE_CHANNEL_CONSUMPTION_7DAYS = "consumed_watthours_sevendays";
+    public static final String BRIDGE_CHANNEL_CONSUMPTION_LIFE = "consumed_watthours_lifetime";
 
     public static final String INVERTER_CHANNEL_LAST_PRODUCTION = "last_report_watts";
     public static final String INVERTER_CHANNEL_MAX = "max_report_watts";

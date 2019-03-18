@@ -41,6 +41,7 @@ import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.enphaseenvoy.discovery.EnphaseEnvoyDiscoveryService;
 import org.openhab.binding.enphaseenvoy.protocol.InverterProduction;
 import org.openhab.binding.enphaseenvoy.protocol.SystemProduction;
+import org.openhab.binding.enphaseenvoy.protocol.SystemConsumption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ import com.google.gson.stream.JsonReader;
  * sent to one of the channels.
  *
  * @author thomas hentschel - Initial contribution
+ * @author sameer morar - Added consumption data
  */
 @NonNullByDefault
 public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
@@ -61,6 +63,7 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
     private final Logger logger = LoggerFactory.getLogger(EnphaseEnvoyBridgeHandler.class);
 
     private final static String PRODUCTION_URL = "/api/v1/production";
+    private final static String CONSUMPTION_URL = "/api/v1/consumption";
 
     @Nullable
     private Runnable scanner;
@@ -69,7 +72,8 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
     @SuppressWarnings("unused")
     private EnphaseEnvoyDiscoveryService discoveryService;
     private InverterParser inverterParser;
-    private SystemProduction lastupdate;
+    private SystemProduction prod_lastupdate;
+    private SystemConsumption cons_lastupdate;
 
     @SuppressWarnings("null")
     public EnphaseEnvoyBridgeHandler(Bridge thing) {
@@ -82,7 +86,8 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
             }
         };
         this.inverterParser = new InverterParser(this);
-        this.lastupdate = new SystemProduction();
+        this.prod_lastupdate = new SystemProduction();
+        this.cons_lastupdate = new SystemConsumption();
     }
 
     @SuppressWarnings({ "unused", "null" })
@@ -171,18 +176,46 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
         return this.inverterParser;
     }
 
-    private String getBaseURL() {
+    private String getBaseProdURL() {
         EnphaseEnvoyBridgeConfiguration config = getConfigAs(EnphaseEnvoyBridgeConfiguration.class);
         // "envoy:" + this.getPassword() + "@"
         return "http://" + config.hostname + PRODUCTION_URL;
     }
 
-    private String getValues() throws IOException {
-        URL url = new URL(this.getBaseURL());
+    private String getBaseConsURL() {
+        EnphaseEnvoyBridgeConfiguration config = getConfigAs(EnphaseEnvoyBridgeConfiguration.class);
+        // "envoy:" + this.getPassword() + "@"
+        return "http://" + config.hostname + CONSUMPTION_URL;
+    }
+
+    private String getProdValues() throws IOException {
+        URL url = new URL(this.getBaseProdURL());
+        logger.warn("envoy scanner url: {}", url.toString());
         logger.trace("envoy scanner url: {}", url.toString());
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Connection", "keep-alive");
         connection.setRequestProperty("Pragma", "no-cache");
+        connection.setRequestProperty("Upgrade-Insecure-Requests", "1");
+        connection.setRequestProperty("Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+
+        InputStream content = connection.getInputStream();
+        BufferedReader in = new BufferedReader(new InputStreamReader(content));
+        String lines = "";
+        String line;
+        while ((line = in.readLine()) != null) {
+            lines += line;
+        }
+        return lines;
+    }
+
+    private String getConsValues() throws IOException {
+        URL url = new URL(this.getBaseConsURL());
+        logger.warn("envoy scanner url: {}", url.toString());
+        logger.trace("envoy scanner url: {}", url.toString());
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestProperty("Connection", "keep-alive");
+        connection.setRequestProperty("Cache-Control", "no-cache");
         connection.setRequestProperty("Upgrade-Insecure-Requests", "1");
         connection.setRequestProperty("Accept",
                 "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
@@ -218,7 +251,7 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
 
     private void runScanner() {
         try {
-            String json = this.getValues();
+            String json = this.getProdValues();
             json = json.replaceAll("<html>", "").replaceAll("</html>", "").replaceAll("<body>", "")
                     .replaceAll("</body>", "").replaceAll("<pre>", "").replaceAll("</pre>", "");
             JsonReader parser = new JsonReader(new StringReader(json));
@@ -226,24 +259,51 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
             Gson gson = new GsonBuilder().create();
             SystemProduction production = gson.fromJson(json, SystemProduction.class);
             parser.close();
-            if (production.wattsNow != this.lastupdate.wattsNow) {
+            if (production.wattsNow != this.prod_lastupdate.wattsNow) {
                 this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_PRODUCTION_NOW,
                         new DecimalType(production.wattsNow));
             }
-            if (production.wattHoursToday != this.lastupdate.wattHoursToday) {
+            if (production.wattHoursToday != this.prod_lastupdate.wattHoursToday) {
                 this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_PRODUCTION_TODAY,
                         new DecimalType(production.wattHoursToday));
             }
-            if (production.wattHoursSevenDays != this.lastupdate.wattHoursSevenDays) {
+            if (production.wattHoursSevenDays != this.prod_lastupdate.wattHoursSevenDays) {
                 this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_PRODUCTION_7DAYS,
                         new DecimalType(production.wattHoursSevenDays));
             }
-            if (production.wattHoursLifetime != this.lastupdate.wattHoursLifetime) {
+            if (production.wattHoursLifetime != this.prod_lastupdate.wattHoursLifetime) {
                 this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_PRODUCTION_LIFE,
                         new DecimalType(production.wattHoursLifetime));
             }
 
-            this.lastupdate = production;
+            this.prod_lastupdate = production;
+
+            json = this.getConsValues();
+            json = json.replaceAll("<html>", "").replaceAll("</html>", "").replaceAll("<body>", "")
+                    .replaceAll("</body>", "").replaceAll("<pre>", "").replaceAll("</pre>", "");
+            parser = new JsonReader(new StringReader(json));
+            parser.setLenient(true);
+            gson = new GsonBuilder().create();
+            SystemConsumption consumption = gson.fromJson(json, SystemConsumption.class);
+            parser.close();
+            if (consumption.wattsNow != this.cons_lastupdate.wattsNow) {
+                this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_CONSUMPTION_NOW,
+                        new DecimalType(consumption.wattsNow));
+            }
+            if (consumption.wattHoursToday != this.cons_lastupdate.wattHoursToday) {
+                this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_CONSUMPTION_TODAY,
+                        new DecimalType(consumption.wattHoursToday));
+            }
+            if (consumption.wattHoursSevenDays != this.cons_lastupdate.wattHoursSevenDays) {
+                this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_CONSUMPTION_7DAYS,
+                        new DecimalType(consumption.wattHoursSevenDays));
+            }
+            if (consumption.wattHoursLifetime != this.cons_lastupdate.wattHoursLifetime) {
+                this.updateState(EnphaseEnvoyBindingConstants.BRIDGE_CHANNEL_CONSUMPTION_LIFE,
+                        new DecimalType(consumption.wattHoursLifetime));
+            }
+
+            this.cons_lastupdate = consumption;
 
             if (!this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
                 this.updateStatus(ThingStatus.ONLINE);
